@@ -7,6 +7,7 @@ plugins {
 android {
     namespace = "com.architect.ojas"
     compileSdk = 34
+    
     defaultConfig {
         applicationId = "com.architect.ojas"
         minSdk = 33 
@@ -14,6 +15,7 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
+
     buildTypes {
         release {
             isMinifyEnabled = true
