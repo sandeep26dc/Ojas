@@ -1,39 +1,29 @@
 # <p align="center">✧ OJAS ✧</p>
-<p align="center"><b>The Generative Sensory HUD for the Android Elite</b></p>
+<p align="center"><b>The Generative Sensory HUD | Mercury Edition</b></p>
 
 ---
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/sandeep26dc/Ojas/main/art/mercury_flux.gif" width="100%" />
-</p>
+## 🏛 ARCHITECTURAL SUMMARY
+**Ojas** is a high-performance Android HUD that utilizes **Sensor Fusion** and **AGSL Shaders** to visualize the invisible physics of your environment. 
 
-## 🌌 THE MANIFESTO
-**Ojas** is not an application; it is a physical extension of the smartphone’s nervous system. Designed by **Lead Architect Sandeep Som**, Ojas captures the invisible—the magnetic flux, the atmospheric weight, and the photons of light—and manifests them into a **Liquid Mercury HUD**.
+### ⚡ FEATURES
+- **Liquid Mercury Engine:** Real-time physics-based metal shader that reacts to EMF and Gravity.
+- **Topographic HUD:** A data-reactive grid measuring atmospheric pressure (Barometer).
+- **Zen Engine:** Procedural sinusoidal audio humming synchronized to magnetic flux.
+- **Kinetic Interactivity:** Swipe to change fluid viscosity from Water to Lead.
 
-### 🛠 ENGINEERING SPECIFICATIONS
-- **Kernel:** Kotlin 2.0 (High-Efficiency Bytecode)
-- **Visual Engine:** AGSL (Android Graphics Shading Language) Ray-Marching
-- **Sensor Fusion:** Real-time Magnetometer, Barometer, and Light-Sensor integration.
-- **Privacy Protocol:** **VOID-SYNC** (Zero Internet Permissions. Local-Only existence.)
-
----
-
-### 🔮 CORE HUD MODULES
-| Module | Sensor Source | Visual Output |
-| :--- | :--- | :--- |
-| **Material Flux** | Magnetometer | Liquid Mercury spikes and ripples based on EMF interference. |
-| **Atmospheric Grid** | Barometer | A topographic grid that breathes based on local air pressure. |
-| **Lumen Shift** | Light Sensor | Specular highlights and deep shadows adapt to the room's glow. |
-| **Kinetic Slosh** | Accelerometer | The liquid metal reacts to gravity and motion with real physics. |
+### 🛠 TECH STACK
+- **Language:** Kotlin 2.0 (Strongly Typed Performance)
+- **Graphics:** AGSL (Android Graphics Shading Language)
+- **Architecture:** Clean Architecture + MVI
+- **Security:** **Zero-Permissions Protocol** (Offline by design).
 
 ---
 
-### 🏗 BUILD & INSTALL
-Designed for high-end Android hardware (API 33+).
+## 👤 LEAD ENGINEER
+**Sandeep Som**  
+*Lead Android Performance Engineer*  
+[github.com/sandeep26dc](https://github.com/sandeep26dc)
 
-```bash
-# Clone the architect's repository
-git clone https://github.com/sandeep26dc/Ojas.git
-
-# Build the optimized Mercury Engine
-./gradlew assembleDebug
+---
+<p align="center"><i>"Built for the elite. Built for the sensors. Built for Ojas."</i></p>
