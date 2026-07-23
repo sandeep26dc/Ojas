@@ -1,8 +1,7 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/sandeep26dc/Ojas/main/app/src/main/res/drawable/ic_launcher_foreground.xml" width="120" />
+  <img src="assets/hero.svg" width="100%" />
 </p>
 
-<h1 align="center">✧ O &nbsp; J &nbsp; A &nbsp; S ✧</h1>
 <p align="center">
   <b>The World’s First Generative Sensory HUD</b><br>
   <i>"A Digital Alchemy of Physics, Light, and Divine Motion"</i>
@@ -14,16 +13,14 @@
   <img src="https://img.shields.io/badge/Graphics-AGSL--Mercury-FFD700?style=for-the-badge" />
 </p>
 
----
+<img src="assets/manifesto_header.svg" width="100%" />
 
-### 🌌 THE MANIFESTO
 **Ojas** is not an application; it is a **Sensory Lens**. It is the manifestation of the invisible energy fields—the magnetic flux, the atmospheric weight, and the photons of light—transformed into a living, 3D Liquid Mercury interface. 
 
 Built for the elite Android hardware, Ojas utilizes **Data-Reactive Art** to turn your device into a high-precision scientific instrument with a divine soul.
 
----
+<img src="assets/spine_header.svg" width="100%" />
 
-### 🛠 THE DIGITAL SPINE
 <table align="center">
   <tr>
     <td align="center"><b>ENGINE</b></td>
@@ -42,28 +39,21 @@ Built for the elite Android hardware, Ojas utilizes **Data-Reactive Art** to tur
   </tr>
 </table>
 
----
-
-### ⚡ SACRED FEATURES
+<img src="assets/features_header.svg" width="100%" />
 
 *   **Mercury Core:** A real-time physics-based metal shader that ripples and spikes when near magnetic fields (EMF Awareness).
 *   **Topographic HUD:** A data-reactive grid that breathes and glows cyan based on local atmospheric pressure shifts.
 *   **Zen Pulse:** A procedural sinusoidal audio engine that hums in perfect harmony with the room’s magnetic vibration.
 *   **Kinetic Viscosity:** Swipe the HUD to change the material state of the mercury—from fast water to heavy, crushing lead.
-*   **The Bindu:** A central divine golden spark representing the "Ojas" or vital energy at the heart of the system.
 
----
+<img src="assets/protocol_header.svg" width="100%" />
 
-### 🛡 THE SOVEREIGN PROTOCOL
 **Ojas** operates on a **Zero-Internet Mandate**. 
 - 100% Offline.
 - 0% Data Collection.
 - Pure local sensory processing. Your environment stays yours.
 
----
-
-### 🏗 INVOCATION (INSTALLATION)
-Designed for Android 13+ (API 33) with high-end GPU support.
+<img src="assets/install_header.svg" width="100%" />
 
 ```bash
 # Clone the Architect's repository
