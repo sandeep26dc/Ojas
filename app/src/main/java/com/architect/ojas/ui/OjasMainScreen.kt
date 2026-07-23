@@ -18,13 +18,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.architect.ojas.domain.model.OjasState
 import com.architect.ojas.ui.components.ExecutiveDashboard
 import com.architect.ojas.ui.components.FluidToggle
 import com.architect.ojas.ui.components.ShadowGrid
 import com.architect.ojas.ui.shader.LiquidMetalShader
 
-@RequiresApi(Build.VERSION_33)
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun OjasMainScreen(
     state: OjasState,
@@ -32,7 +33,7 @@ fun OjasMainScreen(
     onViscosityChange: (Float) -> Unit
 ) {
     val shader = remember { RuntimeShader(LiquidMetalShader.CODE) }
-    var viscosity by remember { mutableStateOf(5.0f) }
+    var localViscosity by remember { mutableStateOf(5.0f) }
     var zenModeActive by remember { mutableStateOf(false) }
     var showInfo by remember { mutableStateOf(false) }
 
@@ -47,30 +48,24 @@ fun OjasMainScreen(
         .background(Color.Black)
         .pointerInput(Unit) {
             detectHorizontalDragGestures { _, dragAmount ->
-                // Dragging horizontally changes the "Density" of the Mercury
-                viscosity = (viscosity + dragAmount / 50f).coerceIn(1.0f, 15.0f)
-                onViscosityChange(viscosity)
+                localViscosity = (localViscosity + dragAmount / 50f).coerceIn(1.0f, 15.0f)
+                onViscosityChange(localViscosity)
             }
         }
     ) {
-        // Layer 1: The Divine Mercury (GPU)
         Canvas(modifier = Modifier.fillMaxSize()) {
             shader.setFloatUniform("uSize", size.width, size.height)
             shader.setFloatUniform("uTime", time)
             shader.setFloatUniform("uMagneticFlux", state.magneticFieldIntensity)
             shader.setFloatUniform("uPressure", state.airPressureDensity)
             shader.setFloatUniform("uLumen", state.lightLumenLevel)
-            shader.setFloatUniform("uViscosity", viscosity)
+            shader.setFloatUniform("uViscosity", localViscosity)
             drawRect(brush = ShaderBrush(shader))
         }
 
-        // Layer 2: The Shadow Grid (Glows under Pressure)
         ShadowGrid(pressure = state.airPressureDensity)
-
-        // Layer 3: Technical Telemetry (Dashboard)
         ExecutiveDashboard(state = state)
 
-        // Layer 4: Interactive Kinetic Toggles
         Row(
             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 48.dp),
             horizontalArrangement = Arrangement.spacedBy(64.dp)
@@ -79,7 +74,6 @@ fun OjasMainScreen(
                 zenModeActive = it
                 onAudioToggle(it)
             }
-            
             IconButton(onClick = { showInfo = true }) {
                 Icon(Icons.Default.Info, "Manifest", tint = Color.White.copy(alpha = 0.3f))
             }
@@ -89,4 +83,20 @@ fun OjasMainScreen(
             OjasInfoDialog(onDismiss = { showInfo = false })
         }
     }
+}
+
+@Composable
+fun OjasInfoDialog(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF050505),
+        title = { Text("SYSTEM MANIFEST", color = Color.White) },
+        text = {
+            Column {
+                Text("ARCHITECT: Sandeep Som", color = Color.Cyan, fontSize = 14.sp)
+                Text("VERSION: 1.0.0 (Ojas Mercury)", color = Color.Gray, fontSize = 12.sp)
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("CLOSE", color = Color.White) } }
+    )
 }
