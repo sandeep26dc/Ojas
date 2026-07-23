@@ -10,6 +10,7 @@ object LiquidMetalShader {
         uniform float uMagneticFlux;
         uniform float uPressure;
         uniform float uLumen;
+        uniform float uViscosity; // Range 1.0 (Water) to 10.0 (Lead)
 
         float hash(float n) { return fract(sin(n) * 43758.5453123); }
         
@@ -29,39 +30,30 @@ object LiquidMetalShader {
             float2 p = -1.0 + 2.0 * uv;
             p.x *= uSize.x / uSize.y;
 
-            // Physical constant for Mercury: High Surface Tension
-            float surfaceTension = 1.5 + (uPressure * 2.0);
-            float3 movement = float3(p * surfaceTension, uTime * 0.4);
+            // uViscosity changes the frequency of the ripples
+            float3 movement = float3(p * uViscosity, uTime * 0.3);
+            float distortion = noise(movement + (uMagneticFlux * 2.0));
             
-            // Flux Distortion
-            float fluxBase = noise(movement + (uMagneticFlux * 3.0));
-            
-            // Calculate Normals (Pseudo-3D)
+            // Specular Reflection Logic
             float val = noise(movement);
-            float valX = noise(movement + float3(0.01, 0.0, 0.0));
-            float valY = noise(movement + float3(0.0, 0.01, 0.0));
-            float3 normal = normalize(float3(valX - val, valY - val, 0.05));
+            float valX = noise(movement + float3(0.005, 0.0, 0.0));
+            float valY = noise(movement + float3(0.0, 0.005, 0.0));
+            float3 normal = normalize(float3(valX - val, valY - val, 0.08));
 
-            // Specular Lighting (Mercury Highlights)
-            float3 lightDir = normalize(float3(1.0, 1.0, 1.0));
-            float spec = pow(max(dot(normal, lightDir), 0.0), 32.0);
+            float3 lightDir = normalize(float3(1.0, 1.0, 1.5));
+            float spec = pow(max(dot(normal, lightDir), 0.0), 40.0);
             
-            // Spectral Iridescence (Only when Magnetic Flux is high)
-            float3 iridescence = float3(
-                sin(uMagneticFlux * 5.0 + 0.0),
-                sin(uMagneticFlux * 5.0 + 2.0),
-                sin(uMagneticFlux * 5.0 + 4.0)
-            ) * 0.2 * uMagneticFlux;
-
-            // Combine for Mercury Finish
-            float3 baseChrome = float3(0.05, 0.05, 0.07); // Dark Base
-            float3 mercury = lerp(baseChrome, float3(0.9, 0.9, 1.0), spec);
-            mercury += iridescence; // Add the Flux charge
+            // The "Divine" Tint: Spectral Violet in the occlusion
+            float3 shadowColor = float3(0.05, 0.02, 0.1); // Deep Violet
+            float3 chromeColor = float3(0.9, 0.9, 1.0);   // Pure Mercury
             
-            // Apply Lumen for environmental dimming
-            mercury *= (0.5 + uLumen * 0.5);
+            float3 finalColor = lerp(shadowColor, chromeColor, spec);
+            
+            // Environmental Glow (Lumen)
+            finalColor += float3(0.0, 0.8, 1.0) * uMagneticFlux * 0.3; // Cyan magnetic glow
+            finalColor *= (0.3 + uLumen * 0.7);
 
-            return half4(mercury, 1.0);
+            return half4(finalColor, 1.0);
         }
     """.trimIndent()
 }
