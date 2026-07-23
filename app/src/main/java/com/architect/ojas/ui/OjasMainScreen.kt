@@ -1,6 +1,8 @@
 package com.architect.ojas.ui
 
 import android.graphics.RuntimeShader
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -15,21 +17,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.architect.ojas.domain.model.OjasState
 import com.architect.ojas.ui.components.ExecutiveDashboard
 import com.architect.ojas.ui.components.FluidToggle
+import com.architect.ojas.ui.components.ShadowGrid
 import com.architect.ojas.ui.shader.LiquidMetalShader
 
+@RequiresApi(Build.VERSION_33)
 @Composable
-fun OjasMainScreen(state: OjasState, onAudioToggle: (Boolean) -> Unit) {
+fun OjasMainScreen(
+    state: OjasState,
+    onAudioToggle: (Boolean) -> Unit,
+    onViscosityChange: (Float) -> Unit
+) {
     val shader = remember { RuntimeShader(LiquidMetalShader.CODE) }
     var viscosity by remember { mutableStateOf(5.0f) }
     var zenModeActive by remember { mutableStateOf(false) }
     var showInfo by remember { mutableStateOf(false) }
-    var showSettings by remember { mutableStateOf(false) }
 
     val infiniteTransition = rememberInfiniteTransition(label = "engine")
     val time by infiniteTransition.animateFloat(
@@ -42,11 +47,13 @@ fun OjasMainScreen(state: OjasState, onAudioToggle: (Boolean) -> Unit) {
         .background(Color.Black)
         .pointerInput(Unit) {
             detectHorizontalDragGestures { _, dragAmount ->
+                // Dragging horizontally changes the "Density" of the Mercury
                 viscosity = (viscosity + dragAmount / 50f).coerceIn(1.0f, 15.0f)
+                onViscosityChange(viscosity)
             }
         }
     ) {
-        // GPU Layer: The Divine Mercury
+        // Layer 1: The Divine Mercury (GPU)
         Canvas(modifier = Modifier.fillMaxSize()) {
             shader.setFloatUniform("uSize", size.width, size.height)
             shader.setFloatUniform("uTime", time)
@@ -57,13 +64,16 @@ fun OjasMainScreen(state: OjasState, onAudioToggle: (Boolean) -> Unit) {
             drawRect(brush = ShaderBrush(shader))
         }
 
-        // UI Layer: Dashboard
+        // Layer 2: The Shadow Grid (Glows under Pressure)
+        ShadowGrid(pressure = state.airPressureDensity)
+
+        // Layer 3: Technical Telemetry (Dashboard)
         ExecutiveDashboard(state = state)
 
-        // Bottom Controls: Settings & Info
+        // Layer 4: Interactive Kinetic Toggles
         Row(
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 40.dp),
-            horizontalArrangement = Arrangement.spacedBy(40.dp)
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 48.dp),
+            horizontalArrangement = Arrangement.spacedBy(64.dp)
         ) {
             FluidToggle(label = "ZEN_AUDIO", isActive = zenModeActive) {
                 zenModeActive = it
@@ -71,7 +81,7 @@ fun OjasMainScreen(state: OjasState, onAudioToggle: (Boolean) -> Unit) {
             }
             
             IconButton(onClick = { showInfo = true }) {
-                Icon(Icons.Default.Info, "Info", tint = Color.White.copy(alpha = 0.2f))
+                Icon(Icons.Default.Info, "Manifest", tint = Color.White.copy(alpha = 0.3f))
             }
         }
 
@@ -79,25 +89,4 @@ fun OjasMainScreen(state: OjasState, onAudioToggle: (Boolean) -> Unit) {
             OjasInfoDialog(onDismiss = { showInfo = false })
         }
     }
-}
-
-@Composable
-fun OjasInfoDialog(onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = Color(0xFF050505),
-        title = { Text("SYSTEM MANIFEST", color = Color.White, letterSpacing = 2.sp) },
-        text = {
-            Column {
-                Text("ARCHITECT: Sandeep Som", color = Color.Cyan, fontSize = 14.sp)
-                Text("VERSION: 1.0.0 (Ojas Mercury)", color = Color.Gray, fontSize = 12.sp)
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("PURPOSE: A sensory lens translating environmental physics into generative art.", color = Color.LightGray, fontSize = 12.sp)
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("HARDWARE REQS:", color = Color.White, fontSize = 10.sp)
-                Text("• Magnetometer (EMF Tracking)\n• Barometer (Atmospheric PSI)\n• API 33+ (AGSL Runtime)", color = Color.Gray, fontSize = 11.sp)
-            }
-        },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("CLOSE", color = Color.White) } }
-    )
 }
