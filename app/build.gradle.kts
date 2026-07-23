@@ -35,7 +35,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     
-    // Fixed: Modern Kotlin Compiler Options
     kotlinOptions {
         jvmTarget = "17"
     }
@@ -43,15 +42,10 @@ android {
     buildFeatures {
         compose = true
     }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
 }
 
 dependencies {
-    // Fixed: Hyphens converted to Dots for the Version Catalog accessor
+    // DOT NOTATION: Required for Kotlin DSL Version Catalogs
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
