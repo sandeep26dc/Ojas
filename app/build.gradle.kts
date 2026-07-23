@@ -7,7 +7,8 @@ plugins {
 android {
     namespace = "com.architect.ojas"
     compileSdk = 34
-    
+    buildToolsVersion = "34.0.0" // Explicitly override the ghost version
+
     defaultConfig {
         applicationId = "com.architect.ojas"
         minSdk = 33 
