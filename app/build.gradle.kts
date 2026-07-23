@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.architect.ojas"
-        minSdk = 33 // Required for high-end AGSL and specialized sensor APIs
+        minSdk = 33 
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -34,9 +34,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+    
+    // Fixed: Modern Kotlin Compiler Options
     kotlinOptions {
         jvmTarget = "17"
     }
+
     buildFeatures {
         compose = true
     }
@@ -48,12 +51,13 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidx-core-ktx)
-    implementation(libs.androidx-lifecycle-runtime-ktx)
-    implementation(libs.androidx-activity-compose)
-    implementation(platform(libs.androidx-compose-bom))
-    implementation(libs.androidx-ui)
-    implementation(libs.androidx-ui-graphics)
-    implementation(libs.androidx-material3)
-    debugImplementation(libs.androidx-ui-tooling-preview)
+    // Fixed: Hyphens converted to Dots for the Version Catalog accessor
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.activity.compose)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.material3)
+    debugImplementation(libs.androidx.ui.tooling.preview)
 }
