@@ -33,7 +33,7 @@ fun OjasMainScreen(
     onViscosityChange: (Float) -> Unit
 ) {
     val shader = remember { RuntimeShader(LiquidMetalShader.CODE) }
-    var localViscosity by remember { mutableStateOf(5.0f) }
+    var localViscosity by remember { mutableFloatStateOf(5.0f) }
     var zenModeActive by remember { mutableStateOf(false) }
     var showInfo by remember { mutableStateOf(false) }
 
