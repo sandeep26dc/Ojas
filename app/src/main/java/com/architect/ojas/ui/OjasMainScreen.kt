@@ -7,6 +7,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
@@ -15,9 +17,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.architect.ojas.domain.model.OjasState
+import com.architect.ojas.ui.components.ExecutiveDashboard
 import com.architect.ojas.ui.components.TopographicGrid
 import com.architect.ojas.ui.shader.LiquidMetalShader
 
@@ -46,10 +50,13 @@ fun OjasMainScreen(state: OjasState) {
             drawRect(brush = ShaderBrush(shader))
         }
 
-        // Layer 2: The Architectural Grid
+        // Layer 2: Architectural Grid
         TopographicGrid(pressure = state.airPressureDensity)
 
-        // Layer 3: Subtle Branding/Info
+        // Layer 3: Executive Dashboard readouts
+        ExecutiveDashboard(state = state)
+
+        // Layer 4: Subtle Branding/Info Trigger
         IconButton(
             onClick = { showInfo = true },
             modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp).size(32.dp),
@@ -58,25 +65,52 @@ fun OjasMainScreen(state: OjasState) {
             Icon(Icons.Default.Info, contentDescription = "Info", modifier = Modifier.size(18.dp))
         }
 
+        // --- THE "i" SECTION ---
         if (showInfo) {
             AlertDialog(
                 onDismissRequest = { showInfo = false },
                 containerColor = Color(0xFF0A0A0A),
                 titleContentColor = Color.White,
                 textContentColor = Color.LightGray,
-                title = { Text("Ojas v1.0.0-Flux", fontSize = 18.sp) },
+                title = { 
+                    Text("OJAS: SENSORY HUD", fontWeight = FontWeight.Bold, letterSpacing = 2.sp) 
+                },
                 text = {
-                    Column {
-                        Text("Lead Architect: Sandeep Som")
-                        Text("Engine: Kotlin 2.0 / AGSL Mercury")
-                        Text("Handle: sandeep26dc")
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text("Sensory Input: Active", color = Color(0xFF00FFCC), fontSize = 10.sp)
+                    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                        Text("ARCHITECT", color = Color.White.copy(alpha = 0.4f), fontSize = 10.sp)
+                        Text("Sandeep Som (sandeep26dc)", color = Color.White, fontSize = 14.sp)
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        Text("VERSION", color = Color.White.copy(alpha = 0.4f), fontSize = 10.sp)
+                        Text("1.0.0 — Mercury Build", color = Color.White, fontSize = 14.sp)
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        Text("SYSTEM REQUIREMENTS", color = Color.White.copy(alpha = 0.4f), fontSize = 10.sp)
+                        Text("• Android 13 (API 33) or higher\n" +
+                             "• Hardware Magnetometer (EMF)\n" +
+                             "• Hardware Barometer (Pressure)\n" +
+                             "• Ambient Light Sensor\n" +
+                             "• High-Performance GPU (AGSL Support)", color = Color.LightGray, fontSize = 12.sp)
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        Text("WHAT IS OJAS?", color = Color.White.copy(alpha = 0.4f), fontSize = 10.sp)
+                        Text("Ojas is a 'Digital Twin' of your physical environment. It translates invisible forces—magnetic fields, atmospheric pressure, and light waves—into a living, generative material flux.", color = Color.LightGray, fontSize = 12.sp)
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text("HOW IT HELPS", color = Color.White.copy(alpha = 0.4f), fontSize = 10.sp)
+                        Text("• EMF Awareness: Detect interference from electronics.\n" +
+                             "• Weather Vigilance: Monitor pressure drops for incoming storms.\n" +
+                             "• Stress Reduction: A dynamic, focus-oriented ambient HUD.\n" +
+                             "• Zero Privacy Risk: 100% offline. No data leaves the device.", color = Color.LightGray, fontSize = 12.sp)
                     }
                 },
                 confirmButton = {
                     TextButton(onClick = { showInfo = false }) {
-                        Text("Close", color = Color.White)
+                        Text("DISMISS", color = Color.Cyan)
                     }
                 }
             )
