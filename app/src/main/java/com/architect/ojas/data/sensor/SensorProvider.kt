@@ -14,7 +14,6 @@ import kotlin.math.sqrt
 class SensorProvider(context: Context) {
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     
-    // Check for existence safely
     private val magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
     private val barometer = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
     private val lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
@@ -22,8 +21,8 @@ class SensorProvider(context: Context) {
 
     fun getSensorFlux(): Flow<OjasState> = callbackFlow {
         var currentMagnetic = 0f
-        var currentPressure = 0f
-        var currentLight = 0.5f // Default to neutral light
+        var currentPressure = 0.5f 
+        var currentLight = 0.5f
         var gX = 0f; var gY = 0f; var gZ = 0f
 
         val listener = object : SensorEventListener {
@@ -48,21 +47,20 @@ class SensorProvider(context: Context) {
                         magneticFieldIntensity = currentMagnetic,
                         airPressureDensity = currentPressure,
                         lightLumenLevel = currentLight,
-                        gForceVector = Triple(gX, gY, gZ)
+                        gForceVector = Triple(gX, gY, gZ),
+                        isSystemStable = true
                     ))
                 }
             }
             override fun onAccuracyChanged(s: Sensor?, a: Int) {}
         }
 
-        // ONLY register if the hardware actually exists
+        // SAFETY: Only register if the phone actually has the hardware
         magnetometer?.let { sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_UI) }
         barometer?.let { sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_UI) }
         lightSensor?.let { sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_UI) }
         accelerometer?.let { sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_UI) }
 
-        awaitClose {
-            sensorManager.unregisterListener(listener)
-        }
+        awaitClose { sensorManager.unregisterListener(listener) }
     }
 }
