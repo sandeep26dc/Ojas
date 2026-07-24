@@ -5,62 +5,149 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.media.AudioFormat
+import android.media.AudioRecord
+import android.media.MediaRecorder
 import com.architect.ojas.domain.model.OjasState
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlin.math.sqrt
 
-class SensorProvider(context: Context) {
+class SensorProvider(context: Context) : SensorEventListener {
+
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-    
-    private val magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
-    private val barometer = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
-    private val lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
+
+    // Hardware Sensors
     private val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+    private val gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
+    private val magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
+    private val lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
+    private val pressureSensor = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
 
-    fun getSensorFlux(): Flow<OjasState> = callbackFlow {
-        var currentMagnetic = 0f
-        var currentPressure = 0.5f 
-        var currentLight = 0.5f
-        var gX = 0f; var gY = 0f; var gZ = 0f
+    private val _state = MutableStateFlow(OjasState())
+    val state: StateFlow<OjasState> = _state.asStateFlow()
 
-        val listener = object : SensorEventListener {
-            override fun onSensorChanged(event: SensorEvent?) {
-                event?.let {
-                    when (it.sensor.type) {
-                        Sensor.TYPE_MAGNETIC_FIELD -> {
-                            val mag = sqrt(it.values[0]*it.values[0] + it.values[1]*it.values[1] + it.values[2]*it.values[2])
-                            currentMagnetic = (mag / 100f).coerceIn(0f, 1f)
-                        }
-                        Sensor.TYPE_PRESSURE -> {
-                            currentPressure = ((it.values[0] - 950f) / 100f).coerceIn(0f, 1f)
-                        }
-                        Sensor.TYPE_LIGHT -> {
-                            currentLight = (it.values[0] / 1000f).coerceIn(0f, 1f)
-                        }
-                        Sensor.TYPE_ACCELEROMETER -> {
-                            gX = it.values[0]; gY = it.values[1]; gZ = it.values[2]
-                        }
-                    }
-                    trySend(OjasState(
-                        magneticFieldIntensity = currentMagnetic,
-                        airPressureDensity = currentPressure,
-                        lightLumenLevel = currentLight,
-                        gForceVector = Triple(gX, gY, gZ),
-                        isSystemStable = true
-                    ))
+    private var audioRecord: AudioRecord? = null
+    private var isRecordingAudio = false
+
+    fun startListening() {
+        // Register all available hardware sensors
+        accelerometer?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
+        gyroscope?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
+        magnetometer?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI) }
+        lightSensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI) }
+        pressureSensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI) }
+
+        startAcousticBlowListener()
+    }
+
+    fun stopListening() {
+        sensorManager.unregisterListener(this)
+        stopAcousticBlowListener()
+    }
+
+    override fun onSensorChanged(event: SensorEvent?) {
+        event ?: return
+
+        when (event.sensor.type) {
+            Sensor.TYPE_ACCELEROMETER -> {
+                val x = event.values[0]
+                val y = event.values[1]
+                val z = event.values[2]
+                val flux = sqrt(x * x + y * y + z * z)
+
+                _state.update {
+                    it.copy(
+                        tiltX = x,
+                        tiltY = y,
+                        tiltZ = z,
+                        fluxIntensity = flux
+                    )
                 }
             }
-            override fun onAccuracyChanged(s: Sensor?, a: Int) {}
+
+            Sensor.TYPE_GYROSCOPE -> {
+                _state.update {
+                    it.copy(
+                        gyroX = event.values[0],
+                        gyroY = event.values[1],
+                        gyroZ = event.values[2]
+                    )
+                }
+            }
+
+            Sensor.TYPE_MAGNETIC_FIELD -> {
+                val magX = event.values[0]
+                val magY = event.values[1]
+                val magZ = event.values[2]
+                val magTotal = sqrt(magX * magX + magY * magY + magZ * magZ)
+
+                _state.update { it.copy(magneticField = magTotal) }
+            }
+
+            Sensor.TYPE_LIGHT -> {
+                _state.update { it.copy(ambientLight = event.values[0]) }
+            }
+
+            Sensor.TYPE_PRESSURE -> {
+                _state.update { it.copy(atmosphericPressure = event.values[0]) }
+            }
         }
+    }
 
-        // SAFETY: Only register if the phone actually has the hardware
-        magnetometer?.let { sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_UI) }
-        barometer?.let { sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_UI) }
-        lightSensor?.let { sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_UI) }
-        accelerometer?.let { sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_UI) }
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
-        awaitClose { sensorManager.unregisterListener(listener) }
+    // Acoustic / Blow Detection via Audio Amplitude
+    private fun startAcousticBlowListener() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val sampleRate = 8000
+                val bufferSize = AudioRecord.getMinBufferSize(
+                    sampleRate,
+                    AudioFormat.CHANNEL_IN_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT
+                )
+                if (bufferSize <= 0) return@launch
+
+                audioRecord = AudioRecord(
+                    MediaRecorder.AudioSource.MIC,
+                    sampleRate,
+                    AudioFormat.CHANNEL_IN_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT,
+                    bufferSize
+                )
+
+                audioRecord?.startRecording()
+                isRecordingAudio = true
+                val buffer = ShortArray(bufferSize)
+
+                while (isRecordingAudio) {
+                    val readSize = audioRecord?.read(buffer, 0, buffer.size) ?: 0
+                    if (readSize > 0) {
+                        var sum = 0.0
+                        for (i in 0 until readSize) {
+                            sum += buffer[i] * buffer[i]
+                        }
+                        val amplitude = sqrt(sum / readSize)
+                        
+                        _state.update { it.copy(soundAcousticDb = amplitude.toFloat()) }
+                    }
+                }
+            } catch (e: Exception) {
+                // Microphones may require RECORD_AUDIO runtime permissions
+            }
+        }
+    }
+
+    private fun stopAcousticBlowListener() {
+        isRecordingAudio = false
+        audioRecord?.stop()
+        audioRecord?.release()
+        audioRecord = null
     }
 }
