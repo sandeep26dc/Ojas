@@ -10,62 +10,65 @@ import com.architect.ojas.haptics.HapticEngine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class OjasViewModel(
-    application: Application,
-    private val sensorProvider: SensorProvider
-) : AndroidViewModel(application) {
+class OjasViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val _uiState = MutableStateFlow(OjasState())
-    val uiState: StateFlow<OjasState> = _uiState.asStateFlow()
-
-    // Sensory Engines
-    private val hapticEngine = HapticEngine(application)
+    private val sensorProvider = SensorProvider(application)
     private val zenEngine = ZenEngine()
+    private val hapticEngine = HapticEngine(application)
 
-    // Local control states
-    private var isZenEnabled = false
-    private var currentViscosity = 5.0f
+    val uiState: StateFlow<OjasState> = sensorProvider.state
 
     init {
-        startObservingSensors()
-    }
-
-    private fun startObservingSensors() {
         viewModelScope.launch {
-            sensorProvider.getSensorFlux().collect { newState ->
-                _uiState.value = newState
-                
-                // Trigger Trinity Sync: Visuals (via state), Audio, and Haptics
-                performSensoryFeedback(newState)
+            uiState.collect { state ->
+                // Dynamically modulate synthesized audio based on tilt & acoustics
+                zenEngine.updateFrequencyAndVolume(
+                    tiltX = state.tiltX,
+                    tiltY = state.tiltY,
+                    acousticDb = state.soundAcousticDb,
+                    masterVolume = state.audioVolume
+                )
+
+                // Trigger subtle haptic pulses on flux peaks
+                if (state.fluxIntensity > 14f) {
+                    hapticEngine.triggerFluxPeakHaptic()
+                }
             }
         }
     }
 
-    private fun performSensoryFeedback(state: OjasState) {
-        // 1. Audio Update
-        if (isZenEnabled) {
-            zenEngine.updateAudio(state.magneticFieldIntensity, state.airPressureDensity)
-        }
-
-        // 2. Haptic Update (Triggered when magnetic flux crosses a threshold)
-        if (state.magneticFieldIntensity > 0.2f) {
-            hapticEngine.pulse(state.magneticFieldIntensity, currentViscosity)
-        }
+    fun startSensors() {
+        sensorProvider.startListening()
+        zenEngine.start()
     }
 
-    fun toggleZenMode(enabled: Boolean) {
-        isZenEnabled = enabled
-        if (enabled) zenEngine.start() else zenEngine.stop()
+    fun stopSensors() {
+        sensorProvider.stopListening()
+        zenEngine.stop()
     }
 
-    fun updateViscosity(value: Float) {
-        currentViscosity = value
+    fun toggleFluidMode() {
+        _stateUpdate { it.copy(isFluidMode = !it.isFluidMode) }
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        zenEngine.stop() // Prevent memory/audio leaks
+    fun setMasterVolume(volume: Float) {
+        _stateUpdate { it.copy(audioVolume = volume) }
+    }
+
+    fun setSensorSensitivity(sensitivity: Float) {
+        _stateUpdate { it.copy(sensorSensitivity = sensitivity) }
+    }
+
+    fun toggleEcoPowerMode() {
+        val newMode = !uiState.value.isEcoMode
+        _stateUpdate { it.copy(isEcoMode = newMode) }
+        sensorProvider.setEcoMode(newMode)
+    }
+
+    private fun _stateUpdate(transform: (OjasState) -> OjasState) {
+        sensorProvider.updateState(transform)
     }
 }
