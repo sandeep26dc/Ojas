@@ -8,6 +8,15 @@ data class OjasState(
     val fluxIntensity: Float = 0f,
     val isFluidMode: Boolean = true,
     val audioVolume: Float = 0.5f,
-    val isEcoMode: Boolean = true,         // Battery Saver Enabled by Default
-    val isDeviceMoving: Boolean = false     // Motion trigger state
-)
+    val sensorSensitivity: Float = 1.0f,
+    val isEcoMode: Boolean = true,
+    val isDeviceMoving: Boolean = false,
+    val soundAcousticDb: Float = 0f
+) {
+    // Legacy aliases to preserve compatibility across existing UI components
+    val magneticFieldIntensity: Float get() = fluxIntensity
+    val airPressureDensity: Float get() = tiltZ
+    val lightLumenLevel: Float get() = ambientLight
+    val isSystemStable: Boolean get() = !isDeviceMoving
+    val gForceVector: FloatArray get() = floatArrayOf(tiltX, tiltY, tiltZ)
+}
