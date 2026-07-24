@@ -2,12 +2,14 @@ package com.architect.ojas
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -43,13 +45,13 @@ class MainActivity : ComponentActivity() {
 
     private val requestAudioPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { /* Permission handled internally by SensorProvider */ }
+    ) { }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Request audio permission for blow/acoustic sensing
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
             != PackageManager.PERMISSION_GRANTED
         ) {
@@ -89,6 +91,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun ExecutiveAppContent(viewModel: OjasViewModel) {
     val state by viewModel.uiState.collectAsState()
@@ -100,10 +103,12 @@ fun ExecutiveAppContent(viewModel: OjasViewModel) {
             .fillMaxSize()
             .background(Color(0xFF090A0F))
     ) {
-        // Main Visualizer & Telemetry View
-        OjasMainScreen(viewModel = viewModel)
+        OjasMainScreen(
+            state = state,
+            onAudioToggle = { active -> viewModel.setMasterVolume(if (active) 0.8f else 0.0f) },
+            onViscosityChange = { v -> viewModel.setSensorSensitivity(v) }
+        )
 
-        // Top Subtle Control Bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -112,7 +117,6 @@ fun ExecutiveAppContent(viewModel: OjasViewModel) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Gold Executive Crest Title
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
@@ -157,7 +161,6 @@ fun ExecutiveAppContent(viewModel: OjasViewModel) {
                 }
             }
 
-            // Futuristic Settings Control Button
             Box(
                 modifier = Modifier
                     .shadow(8.dp, RoundedCornerShape(14.dp))
@@ -189,7 +192,6 @@ fun ExecutiveAppContent(viewModel: OjasViewModel) {
             }
         }
 
-        // Futuristic Settings & Dossier Bottom Sheet
         if (showSettingsSheet) {
             ExecutiveSettingsSheet(
                 state = state,
