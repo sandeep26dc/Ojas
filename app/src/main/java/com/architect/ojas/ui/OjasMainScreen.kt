@@ -4,7 +4,6 @@ import android.graphics.RuntimeShader
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
@@ -23,6 +22,7 @@ import com.architect.ojas.domain.model.OjasState
 import com.architect.ojas.ui.components.ExecutiveDashboard
 import com.architect.ojas.ui.components.FluidToggle
 import com.architect.ojas.ui.components.ShadowGrid
+import com.architect.ojas.ui.components.SmartPowerShaderCanvas
 import com.architect.ojas.ui.shader.LiquidMetalShader
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -39,35 +39,45 @@ fun OjasMainScreen(
 
     val infiniteTransition = rememberInfiniteTransition(label = "engine")
     val time by infiniteTransition.animateFloat(
-        initialValue = 0f, targetValue = 1000f,
-        animationSpec = infiniteRepeatable(tween(200000, easing = LinearEasing)), label = "time"
+        initialValue = 0f, 
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(tween(200000, easing = LinearEasing)), 
+        label = "time"
     )
 
-    Box(modifier = Modifier
-        .fillMaxSize()
-        .background(Color.Black)
-        .pointerInput(Unit) {
-            detectHorizontalDragGestures { _, dragAmount ->
-                localViscosity = (localViscosity + dragAmount / 50f).coerceIn(1.0f, 15.0f)
-                onViscosityChange(localViscosity)
-            }
-        }
-    ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            shader.setFloatUniform("uSize", size.width, size.height)
-            shader.setFloatUniform("uTime", time)
-            shader.setFloatUniform("uMagneticFlux", state.magneticFieldIntensity)
-            shader.setFloatUniform("uPressure", state.airPressureDensity)
-            shader.setFloatUniform("uLumen", state.lightLumenLevel)
-            shader.setFloatUniform("uViscosity", localViscosity)
-            drawRect(brush = ShaderBrush(shader))
-        }
+    // Update AGSL Shader Uniforms continuously with sensor input
+    SideEffect {
+        shader.setFloatUniform("uTime", time)
+        shader.setFloatUniform("uMagneticFlux", state.fluxIntensity)
+        shader.setFloatUniform("uPressure", state.tiltZ)
+        shader.setFloatUniform("uLumen", state.ambientLight)
+        shader.setFloatUniform("uViscosity", localViscosity)
+    }
 
-        ShadowGrid(pressure = state.airPressureDensity)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures { _, dragAmount ->
+                    localViscosity = (localViscosity + dragAmount / 50f).coerceIn(1.0f, 15.0f)
+                    onViscosityChange(localViscosity)
+                }
+            }
+    ) {
+        // Smart Power Shader Canvas freezes GPU draw calls when the phone is static
+        SmartPowerShaderCanvas(
+            state = state,
+            shaderBrush = ShaderBrush(shader)
+        )
+
+        ShadowGrid(pressure = state.tiltZ)
         ExecutiveDashboard(state = state)
 
         Row(
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 48.dp),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 48.dp),
             horizontalArrangement = Arrangement.spacedBy(64.dp)
         ) {
             FluidToggle(label = "ZEN_AUDIO", isActive = zenModeActive) {
@@ -89,14 +99,41 @@ fun OjasMainScreen(
 fun OjasInfoDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF050505),
-        title = { Text("SYSTEM MANIFEST", color = Color.White) },
+        containerColor = Color(0xFF0A0C14),
+        title = { 
+            Text(
+                "SYSTEM MANIFEST", 
+                color = Color(0xFFFFD700), 
+                letterSpacing = 2.sp,
+                fontSize = 16.sp
+            ) 
+        },
         text = {
             Column {
-                Text("ARCHITECT: Sandeep Som", color = Color.Cyan, fontSize = 14.sp)
-                Text("VERSION: 1.0.0 (Ojas Mercury)", color = Color.Gray, fontSize = 12.sp)
+                Text(
+                    "ARCHITECT: Sandeep Som", 
+                    color = Color.White, 
+                    fontSize = 14.sp
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    "VERSION: 2.0.0 (Executive Overhaul)", 
+                    color = Color(0xFFFFD700), 
+                    fontSize = 12.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Ojas is a sensory matrix that translates environmental vectors—motion, gravity, light, acoustics, and air pressure—into liquid AGSL fluid art and motion-reactive PCM sound synthesis.",
+                    color = Color(0xFF8E94A5),
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp
+                )
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("CLOSE", color = Color.White) } }
+        confirmButton = { 
+            TextButton(onClick = onDismiss) { 
+                Text("DISMISS", color = Color(0xFFFFD700)) 
+            } 
+        }
     )
 }
