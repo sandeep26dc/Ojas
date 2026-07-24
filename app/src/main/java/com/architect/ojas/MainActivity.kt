@@ -1,9 +1,12 @@
 package com.architect.ojas
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
@@ -13,7 +16,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -30,17 +32,30 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.architect.ojas.ui.OjasMainScreen
 import com.architect.ojas.ui.OjasViewModel
 import com.architect.ojas.ui.components.DivineStartupSplash
-import com.architect.ojas.ui.components.ExecutiveInfoDialog
+import com.architect.ojas.ui.components.ExecutiveSettingsSheet
 
 class MainActivity : ComponentActivity() {
     private val viewModel: OjasViewModel by viewModels()
 
+    private val requestAudioPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* Permission handled internally by SensorProvider */ }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Request audio permission for blow/acoustic sensing
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+
         setContent {
             var isSplashVisible by rememberSaveable { mutableStateOf(true) }
 
@@ -51,14 +66,12 @@ class MainActivity : ComponentActivity() {
                 Crossfade(
                     targetState = isSplashVisible,
                     animationSpec = tween(durationMillis = 800),
-                    label = "SplashToMain"
+                    label = "SplashTransition"
                 ) { showSplash ->
                     if (showSplash) {
-                        DivineStartupSplash(
-                            onSplashComplete = { isSplashVisible = false }
-                        )
+                        DivineStartupSplash(onSplashComplete = { isSplashVisible = false })
                     } else {
-                        MainExecutiveContainer(viewModel = viewModel)
+                        ExecutiveAppContent(viewModel = viewModel)
                     }
                 }
             }
@@ -77,8 +90,9 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainExecutiveContainer(viewModel: OjasViewModel) {
-    var showInfoDialog by rememberSaveable { mutableStateOf(false) }
+fun ExecutiveAppContent(viewModel: OjasViewModel) {
+    val state by viewModel.uiState.collectAsState()
+    var showSettingsSheet by rememberSaveable { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
 
     Box(
@@ -86,10 +100,10 @@ fun MainExecutiveContainer(viewModel: OjasViewModel) {
             .fillMaxSize()
             .background(Color(0xFF090A0F))
     ) {
-        // Main App Screen Content (Shaders, Dashboard, Sensor Stream)
+        // Main Visualizer & Telemetry View
         OjasMainScreen(viewModel = viewModel)
 
-        // Top Executive Control Overlay
+        // Top Subtle Control Bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -143,7 +157,7 @@ fun MainExecutiveContainer(viewModel: OjasViewModel) {
                 }
             }
 
-            // Interactive Controls
+            // Futuristic Settings Control Button
             Box(
                 modifier = Modifier
                     .shadow(8.dp, RoundedCornerShape(14.dp))
@@ -151,21 +165,21 @@ fun MainExecutiveContainer(viewModel: OjasViewModel) {
                     .background(Color(0xFF131520).copy(alpha = 0.85f))
                     .border(1.dp, Color(0xFF4A3B00), RoundedCornerShape(14.dp))
                     .clickable {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        showInfoDialog = true
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        showSettingsSheet = true
                     }
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = "Executive Info",
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Control Matrix",
                         tint = Color(0xFFFFD700),
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "INFO",
+                        text = "MATRIX",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
@@ -175,9 +189,16 @@ fun MainExecutiveContainer(viewModel: OjasViewModel) {
             }
         }
 
-        // Executive Information Modal
-        if (showInfoDialog) {
-            ExecutiveInfoDialog(onDismiss = { showInfoDialog = false })
+        // Futuristic Settings & Dossier Bottom Sheet
+        if (showSettingsSheet) {
+            ExecutiveSettingsSheet(
+                state = state,
+                onToggleFluidMode = { viewModel.toggleFluidMode() },
+                onVolumeChange = { viewModel.setMasterVolume(it) },
+                onSensitivityChange = { viewModel.setSensorSensitivity(it) },
+                onToggleEcoMode = { viewModel.toggleEcoPowerMode() },
+                onDismiss = { showSettingsSheet = false }
+            )
         }
     }
 }
