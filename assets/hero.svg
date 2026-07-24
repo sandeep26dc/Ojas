@@ -4,13 +4,11 @@
       <style>
         @keyframes pulse { 0%, 100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .container { background: #000; height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; border-bottom: 2px solid #00FFFF33; }
-        .sri-yantra { position: absolute; width: 150px; height: 150px; border: 1px solid #00FFFF; opacity: 0.2; animation: rotate 20s linear infinite; }
-        .title { color: #fff; font-size: 60px; letter-spacing: 20px; font-weight: 100; z-index: 10; margin-bottom: 10px; text-shadow: 0 0 20px #00FFFF; }
-        .bindu { color: #FFD700; animation: pulse 2s ease-in-out infinite; font-size: 40px; }
+        .container { background: #000; height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; }
+        .title { color: #fff; font-size: 60px; letter-spacing: 20px; font-weight: 100; text-shadow: 0 0 20px #00FFFF; }
+        .bindu { color: #FFD700; animation: pulse 2s ease-in-out infinite; font-size: 40px; margin-top: -10px; }
       </style>
       <div class="container">
-        <div class="sri-yantra"></div>
         <div class="title">O J A S</div>
         <div class="bindu">✧</div>
       </div>
