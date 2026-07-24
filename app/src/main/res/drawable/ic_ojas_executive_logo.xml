@@ -1,0 +1,31 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Obsidian Dark Executive Background -->
+    <path
+        android:pathData="M0,0h108v108h-108z"
+        android:fillColor="#0D0E15"/>
+    
+    <!-- Outer Radiant Aura Rings -->
+    <path
+        android:pathData="M54,54m-42,0a42,42 0 1,1 84,0a42,42 0 1,1 -84,0"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FFD700"
+        android:fillColor="#00000000"/>
+    <path
+        android:pathData="M54,54m-32,0a32,32 0 1,1 64,0a32,32 0 1,1 -64,0"
+        android:strokeWidth="0.8"
+        android:strokeColor="#FFB700"
+        android:fillColor="#00000000"/>
+
+    <!-- Sacred Lotus Center Geometry -->
+    <path
+        android:pathData="M54,26 C58,38 68,44 82,54 C68,64 58,70 54,82 C50,70 40,64 26,54 C40,44 50,38 54,26 Z"
+        android:fillColor="#FFD700"/>
+    <path
+        android:pathData="M54,36 C56,44 62,48 72,54 C62,60 56,64 54,72 C52,64 46,60 36,54 C46,48 52,44 54,36 Z"
+        android:fillColor="#FFF8DC"/>
+</vector>
