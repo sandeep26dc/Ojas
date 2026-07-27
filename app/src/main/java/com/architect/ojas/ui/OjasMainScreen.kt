@@ -2,6 +2,7 @@ package com.architect.ojas.ui
 
 import android.graphics.RuntimeShader
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -24,6 +25,7 @@ import com.architect.ojas.ui.components.FluidToggle
 import com.architect.ojas.ui.components.ShadowGrid
 import com.architect.ojas.ui.components.SmartPowerShaderCanvas
 import com.architect.ojas.ui.shader.LiquidMetalShader
+import kotlinx.coroutines.delay
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
@@ -32,10 +34,26 @@ fun OjasMainScreen(
     onAudioToggle: (Boolean) -> Unit,
     onViscosityChange: (Float) -> Unit
 ) {
-    val shader = remember { RuntimeShader(LiquidMetalShader.CODE) }
+    // Safe initialization with try-catch to prevent Mali GPU driver crashes on startup
+    val shader = remember {
+        try {
+            RuntimeShader(LiquidMetalShader.CODE)
+        } catch (e: Exception) {
+            Log.e("OjasShader", "Failed to compile AGSL shader, falling back", e)
+            null
+        }
+    }
+
     var localViscosity by remember { mutableFloatStateOf(5.0f) }
     var zenModeActive by remember { mutableStateOf(false) }
     var showInfo by remember { mutableStateOf(false) }
+    
+    // Safety buffer for GPU context handoff after splash animation
+    var isCanvasReady by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(150) // Allow splash screen transition to clear completely
+        isCanvasReady = true
+    }
 
     val infiniteTransition = rememberInfiniteTransition(label = "engine")
     val time by infiniteTransition.animateFloat(
@@ -45,13 +63,19 @@ fun OjasMainScreen(
         label = "time"
     )
 
-    // Update AGSL Shader Uniforms continuously with sensor input
+    // Update AGSL Shader Uniforms safely if shader compiled successfully
     SideEffect {
-        shader.setFloatUniform("uTime", time)
-        shader.setFloatUniform("uMagneticFlux", state.fluxIntensity)
-        shader.setFloatUniform("uPressure", state.tiltZ)
-        shader.setFloatUniform("uLumen", state.ambientLight)
-        shader.setFloatUniform("uViscosity", localViscosity)
+        shader?.let {
+            try {
+                it.setFloatUniform("uTime", time)
+                it.setFloatUniform("uMagneticFlux", state.fluxIntensity)
+                it.setFloatUniform("uPressure", state.tiltZ)
+                it.setFloatUniform("uLumen", state.ambientLight)
+                it.setFloatUniform("uViscosity", localViscosity)
+            } catch (e: Exception) {
+                Log.e("OjasShader", "Error updating uniforms", e)
+            }
+        }
     }
 
     Box(
@@ -65,11 +89,18 @@ fun OjasMainScreen(
                 }
             }
     ) {
-        // Smart Power Shader Canvas freezes GPU draw calls when the phone is static
-        SmartPowerShaderCanvas(
-            state = state,
-            shaderBrush = ShaderBrush(shader)
-        )
+        // Only trigger canvas and shader rendering after the transition delay clears
+        if (isCanvasReady) {
+            if (shader != null) {
+                SmartPowerShaderCanvas(
+                    state = state,
+                    shaderBrush = ShaderBrush(shader)
+                )
+            } else {
+                // Fallback background canvas if shader compilation failed completely
+                Box(modifier = Modifier.fillMaxSize().background(Color(0xFF05070B)))
+            }
+        }
 
         ShadowGrid(pressure = state.tiltZ)
         ExecutiveDashboard(state = state)
