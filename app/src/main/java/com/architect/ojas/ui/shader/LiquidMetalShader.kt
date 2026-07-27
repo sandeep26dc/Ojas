@@ -19,10 +19,10 @@ object LiquidMetalShader {
             float3 f = fract(x);
             f = f * f * (3.0 - 2.0 * f);
             float n = p.x + p.y * 57.0 + 113.0 * p.z;
-            return lerp(lerp(lerp(hash(n + 0.0), hash(n + 1.0), f.x),
-                        lerp(hash(n + 57.0), hash(n + 58.0), f.x), f.y),
-                   lerp(lerp(hash(n + 113.0), hash(n + 114.0), f.x),
-                        lerp(hash(n + 170.0), hash(n + 171.0), f.x), f.y), f.z);
+            return mix(mix(mix(hash(n + 0.0), hash(n + 1.0), f.x),
+                        mix(hash(n + 57.0), hash(n + 58.0), f.x), f.y),
+                   mix(mix(hash(n + 113.0), hash(n + 114.0), f.x),
+                        mix(hash(n + 170.0), hash(n + 171.0), f.x), f.y), f.z);
         }
 
         half4 main(float2 fragCoord) {
@@ -32,7 +32,7 @@ object LiquidMetalShader {
 
             // --- STEP 26: MASS INERTIA LOGIC ---
             // Higher viscosity makes the "Time" move slower, simulating weight/lag
-            float massLag = lerp(0.9, 0.1, uViscosity / 15.0); 
+            float massLag = mix(0.9, 0.1, uViscosity / 15.0); 
             float3 movement = float3(p * uViscosity, uTime * (0.4 * massLag));
             
             float distortion = noise(movement + (uMagneticFlux * 2.5));
@@ -48,9 +48,9 @@ object LiquidMetalShader {
             
             // Divine Mercury Aesthetics: Chrome with Violet Occlusion
             float3 shadowColor = float3(0.04, 0.01, 0.08); 
-            float3 chromeColor = float3(0.92, 0.92, 0.98);   
+            float3 chromeColor = float3(0.92, 0.92, 0.98);    
             
-            float3 finalColor = lerp(shadowColor, chromeColor, spec);
+            float3 finalColor = mix(shadowColor, chromeColor, spec);
             
             // Add Magnetic Cyan Glow
             finalColor += float3(0.0, 0.5, 0.7) * uMagneticFlux * 0.4;
