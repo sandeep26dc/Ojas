@@ -15,7 +15,7 @@ import kotlin.math.sin
 @Composable
 fun GranularOrbView(
     modifier: Modifier = Modifier,
-    activityLevel: Float = 0.5f // Fluctuates based on telemetry data
+    activityLevel: Float = 0.5f
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "OrbTransition")
 
@@ -43,7 +43,6 @@ fun GranularOrbView(
         val center = Offset(size.width / 2f, size.height / 2f)
         val baseRadius = size.minDimension * 0.28f * pulseScale
 
-        // Outer holographic rings
         drawCircle(
             color = Color(0xFF38BDF8).copy(alpha = 0.2f),
             radius = baseRadius * 1.4f,
@@ -57,14 +56,12 @@ fun GranularOrbView(
             style = Stroke(width = 1.5f)
         )
 
-        // Granular Particle Ring (The Jarvis/FRIDAY Orb Grains)
         val particleCount = 72
         for (i in 0 until particleCount) {
             val angleDeg = (i * (360f / particleCount)) + rotationAngle
             val angleRad = Math.toRadians(angleDeg.toDouble())
 
-            // Disperse/fluctuate grains based on activity level
-            const val jitter = 8f
+            val jitter = 8f
             val dynamicRadius = baseRadius + (sin((i + rotationAngle).toDouble()) * (6f + (activityLevel * 15f))).toFloat()
 
             val x = center.x + (dynamicRadius * cos(angleRad)).toFloat()
@@ -77,7 +74,6 @@ fun GranularOrbView(
             )
         }
 
-        // Core Glowing Orb Nucleus
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
