@@ -34,7 +34,7 @@ fun GranularOrbView(
         targetValue = 1.08f + (activityLevel * 0.12f),
         animationSpec = infiniteRepeatable(
             animation = tween(2200, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.RepeatMode.Reverse
+            repeatMode = RepeatMode.Reverse
         ),
         label = "OrbPulse"
     )
