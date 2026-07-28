@@ -30,7 +30,6 @@ fun OjasTelemetryScreen() {
             .statusBarsPadding()
             .padding(16.dp)
     ) {
-        // Central Granular Orb Animation reacting to telemetry
         GranularOrbView(
             modifier = Modifier.fillMaxSize(),
             activityLevel = telemetryActivity
@@ -40,7 +39,6 @@ fun OjasTelemetryScreen() {
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Top HUD Bar
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -75,7 +73,6 @@ fun OjasTelemetryScreen() {
                 }
             }
 
-            // Live Telemetry Data Cards Overlay
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -105,7 +102,7 @@ fun TelemetryCard(title: String, value: String, modifier: Modifier = Modifier) {
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spaced espaBy = 4.dp
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
                 text = title,
